@@ -1,0 +1,17 @@
+{
+  "name": "pond-wgpu",
+  "private": true,
+  "version": "0.0.1",
+  "source": "src/index.html",
+  "scripts": {
+    "dev": "parcel",
+    "build": "parcel build"
+  },
+  "dependencies": {
+    "webgpu-utils": "^2.0.2"
+  },
+  "devDependencies": {
+    "@webgpu/types": "^0.1.68",
+    "parcel": "^2.14.0"
+  }
+}

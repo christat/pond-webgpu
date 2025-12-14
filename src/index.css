@@ -1,0 +1,19 @@
+html {
+  color-scheme: light dark;
+  font-family: system-ui;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+}
+
+.wgpu-canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16/9;
+}
