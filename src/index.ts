@@ -7,6 +7,6 @@ import { geometry } from 'constants';
 (async () => {
     const handle = await wgpu.getHandle();
     const sample = samples.twoDimensions;
-    const geo = geometry.triangle();
+    const geo = geometry.quad();
     wgpu.renderLoop(handle, geo, sample.init, sample.draw);
 })();

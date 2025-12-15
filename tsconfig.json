@@ -33,6 +33,8 @@
     "paths": {
       "wgpu": ["src/wgpu"],
       "wgpu/*": ["src/wgpu/*"],
+      "math": ["src/math"],
+      "math/*": ["src/math/*"],
       "samples": ["src/samples"],
       "samples/*": ["src/samples/*"],
       "constants": ["src/constants"],

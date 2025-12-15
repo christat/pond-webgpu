@@ -11,6 +11,7 @@ export interface WebGPUHandle {
     pipelines: Map<string, GPURenderPipeline>;
     bindGroups: GPUBindGroup[];
     vertexCount: number;
+    uniformBuffer?: GPUBuffer;
     indexBuffer?: GPUBuffer;
 }
 

@@ -1,3 +1,6 @@
+import { m } from "math";
+import { mat4 } from "wgpu-matrix";
+
 export interface GeometryData {
     vertexCount: number;
     vertexDimension: number;
@@ -5,7 +8,13 @@ export interface GeometryData {
     indices?: Uint32Array<ArrayBuffer>;
     colors?: Uint8Array<ArrayBuffer>;
     uvs?: Float32Array<ArrayBuffer>;
+    transform: Float32Array<ArrayBufferLike>;
 }
+
+const transform = mat4.identity();
+mat4.scale(transform, [0.5, 0.5, 0.5], transform);
+mat4.translate(transform, [0.5, -0.5, 0], transform);
+mat4.rotateZ(transform, m.radians(90), transform);
 
 export const geometry = {
     triangle: (): GeometryData => ({
@@ -25,7 +34,8 @@ export const geometry = {
              0.0,   0.0,    // left
              1.0,   0.0,    // right
              0.5,   1.0,    // top
-        ])
+        ]),
+        transform,
     }),
     quad: (): GeometryData => {
         const vertices = new Float32Array([
@@ -50,13 +60,15 @@ export const geometry = {
             0.0,    0.0,    // bottom left
             0.0,    1.0,    // top left
         ])
+        
         return {
             vertexCount: indices.length,
             vertexDimension: 3,
             vertices,
             indices,
             colors,
-            uvs
+            uvs,
+            transform,
         };
     }
 }

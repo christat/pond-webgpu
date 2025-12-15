@@ -9,7 +9,8 @@
     "copy-assets": "node scripts/copyAssets.js"
   },
   "dependencies": {
-    "webgpu-utils": "^2.0.2"
+    "webgpu-utils": "^2.0.2",
+    "wgpu-matrix": "^3.4.0"
   },
   "devDependencies": {
     "@webgpu/types": "^0.1.68",
