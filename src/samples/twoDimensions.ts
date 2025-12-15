@@ -41,7 +41,7 @@ const shaders = /*wgsl*/`
 
 interface VertexData {
     position: Float32Array<ArrayBuffer>,
-    color: Uint8Array<ArrayBuffer>,
+    color: Uint32Array<ArrayBuffer>,
 }
 
 export const twoDimensions: Sample = {
@@ -60,13 +60,15 @@ export const twoDimensions: Sample = {
         for(let i = 0; i < verticesView.views.length; ++i) {
             let { position, color } = verticesView.views[i] as VertexData;
 
+            // NB! needs custom view as shader exposes u32, but we want to pack 4xu8
+            const colorU8View = new Uint8Array(color.buffer);
+
             const verticesOffset = i * vertexDimension;
             position.set(vertices.slice(verticesOffset, verticesOffset + vertexDimension));
 
             if (colors) {
                 const colorsOffset = i * colorDimension;
-                const slice = colors.slice(colorsOffset, colorsOffset + colorDimension);
-                color.set([255]); // TODO investigate why packing Uint8Array[4] here overflows
+                colorU8View.set(colors.slice(colorsOffset, colorsOffset + colorDimension), color.byteOffset);
             }
         }
 
