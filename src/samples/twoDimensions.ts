@@ -1,24 +1,27 @@
 import {
+    createTextureFromSource,
     getSizeAndAlignmentOfUnsizedArrayElement,
+    loadImageBitmap,
     makeShaderDataDefinitions,
     makeStructuredView,
-    makeTypedArrayViews,
 } from 'webgpu-utils';
 
 import { WebGPUHandle } from 'wgpu';
 import { ElementInfo } from 'wgpu/types';
 import { Sample } from 'samples';
-import { geometry, GeometryData } from 'constants';
+import { GeometryData } from 'constants';
 
 const shaders = /*wgsl*/`
     struct FSInput {
         @builtin(position) position: vec4f,
         @location(0) color: vec4f,
+        @location(1) uv: vec2f,
     }
 
     struct VertexData {
         position: vec3f,
         color: u32,
+        uv: vec2f,
     }
     @group(0) @binding(0) var<storage, read> vertices: array<VertexData>;
 
@@ -31,25 +34,30 @@ const shaders = /*wgsl*/`
         var fsInput: FSInput;
         fsInput.position = vec4f(vertex.position, 1.0);
         fsInput.color = unpack4x8unorm(vertex.color);
+        fsInput.uv = vertex.uv;
         return fsInput;
     }
 
+    @group(0) @binding(1) var textureSampler: sampler;
+    @group(0) @binding(2) var texture: texture_2d<f32>;
+
     @fragment fn fs(fsInput: FSInput) -> @location(0) vec4f {
-        return fsInput.color;
+        return textureSample(texture, textureSampler, fsInput.uv);
     }
 `;
 
 interface VertexData {
     position: Float32Array<ArrayBuffer>,
     color: Uint32Array<ArrayBuffer>,
+    uv: Float32Array<ArrayBuffer>,
 }
 
 export const twoDimensions: Sample = {
-    init: (handle: WebGPUHandle, geometry: GeometryData) => {
+    init: async (handle: WebGPUHandle, geometry: GeometryData) => {
         const module = handle.device.createShaderModule({ label: 'triangle sample shader module', code: shaders });
         const shaderDefs = makeShaderDataDefinitions(shaders);
 
-        const { vertexCount, vertexDimension, vertices, colors } = geometry;
+        const { vertexCount, vertexDimension, vertices, colors, uvs } = geometry;
         handle.vertexCount = vertexCount;
 
         // fill vertex storage buffer
@@ -57,8 +65,9 @@ export const twoDimensions: Sample = {
         const verticesView = makeStructuredView(shaderDefs.storages.vertices, new ArrayBuffer(vertexCount * verticesMetadata.size));
         
         const colorDimension = 4;
+        const uvDimension = 2;
         for(let i = 0; i < verticesView.views.length; ++i) {
-            let { position, color } = verticesView.views[i] as VertexData;
+            let { position, color, uv } = verticesView.views[i] as VertexData;
 
             // NB! needs custom view as shader exposes u32, but we want to pack 4xu8
             const colorU8View = new Uint8Array(color.buffer);
@@ -69,6 +78,11 @@ export const twoDimensions: Sample = {
             if (colors) {
                 const colorsOffset = i * colorDimension;
                 colorU8View.set(colors.slice(colorsOffset, colorsOffset + colorDimension), color.byteOffset);
+            }
+
+            if (uvs) {
+                const uvOffset = i * uvDimension;
+                uv.set(uvs.slice(uvOffset, uvOffset + uvDimension));
             }
         }
 
@@ -91,6 +105,11 @@ export const twoDimensions: Sample = {
 
             handle.indexBuffer = indexBuffer;
         } 
+
+        // create texture sampler and texture
+        const sampler = handle.device.createSampler();
+        const bitmap = await loadImageBitmap('assets/textures/wall.jpg');
+        const textureBuffer = createTextureFromSource(handle.device, bitmap);
         
         // set pipeline
         const pipeline = handle.device.createRenderPipeline({
@@ -110,6 +129,8 @@ export const twoDimensions: Sample = {
             layout: pipeline.getBindGroupLayout(0),
             entries: [
                 { binding: 0, resource: { buffer: vertexStorageBuffer }},
+                { binding: 1, resource: sampler },
+                { binding: 2, resource: textureBuffer.createView() },
             ],
         });
         handle.bindGroups.push(bindGroup);

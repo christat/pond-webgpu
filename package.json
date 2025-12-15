@@ -4,8 +4,9 @@
   "version": "0.0.1",
   "source": "src/index.html",
   "scripts": {
-    "dev": "parcel",
-    "build": "parcel build"
+    "dev": "yarn copy-assets && parcel",
+    "build": "yarn copy-assets && parcel build",
+    "copy-assets": "node scripts/copyAssets.js"
   },
   "dependencies": {
     "webgpu-utils": "^2.0.2"

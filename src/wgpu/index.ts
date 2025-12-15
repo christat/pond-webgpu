@@ -5,7 +5,7 @@ export * from 'wgpu/handle';
 
 export const wgpu = {
     getHandle,
-    renderLoop: (
+    renderLoop: async (
         handle: WebGPUHandle,
         geometry: GeometryData,
         init: (handle: WebGPUHandle, geometry: GeometryData) => void,
@@ -13,7 +13,7 @@ export const wgpu = {
     ) => {
         let raf: number | undefined;
 
-        init(handle, geometry);
+        await init(handle, geometry);
 
         const rafDraw = () => {
             draw(handle, geometry);
