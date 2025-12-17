@@ -13,47 +13,7 @@ import { GeometryData } from 'constants';
 import { mat4 } from 'wgpu-matrix';
 import { m } from 'math';
 
-let frameCount = 0;
-
-const shaders = /*wgsl*/`
-    struct FSInput {
-        @builtin(position) position: vec4f,
-        @location(0) color: vec4f,
-        @location(1) uv: vec2f,
-    }
-
-    struct InstanceData {
-        transform: mat4x4f,
-    }
-
-    struct VertexData {
-        position: vec3f,
-        color: u32,
-        uv: vec2f,
-    }
-
-    @group(0) @binding(0) var<uniform> instanceData: InstanceData;
-    @group(0) @binding(1) var<storage, read> vertices: array<VertexData>;
-    @group(0) @binding(2) var textureSampler: sampler;
-    @group(0) @binding(3) var texture: texture_2d<f32>;
-
-    @vertex fn vs(
-        @builtin(vertex_index) vertexIndex: u32,
-        @builtin(instance_index) instanceIndex: u32,
-    ) -> FSInput {
-        let vertex = vertices[vertexIndex];
-
-        var fsInput: FSInput;
-        fsInput.position = instanceData.transform * vec4f(vertex.position, 1.0);
-        fsInput.color = unpack4x8unorm(vertex.color);
-        fsInput.uv = vertex.uv;
-        return fsInput;
-    }
-
-    @fragment fn fs(fsInput: FSInput) -> @location(0) vec4f {
-        return textureSample(texture, textureSampler, fsInput.uv);
-    }
-`;
+import shaders from './shaders.wgsl';
 
 interface VertexData {
     position: Float32Array<ArrayBuffer>,
@@ -182,8 +142,8 @@ export const twoDimensions: Sample = {
         // update transform uniform buffer
         if (handle.uniformBuffer) {
             const matrix = mat4.copy(geometry.transform);
-            mat4.rotateZ(matrix, m.radians(frameCount), matrix);
-            mat4.translate(matrix, [Math.sin(frameCount / 33), Math.cos(frameCount / 33), 0], matrix);
+            mat4.rotateZ(matrix, m.radians(handle.frame), matrix);
+            mat4.translate(matrix, [Math.sin(handle.frame / 33), Math.cos(handle.frame / 33), 0], matrix);
             handle.device.queue.writeBuffer(handle.uniformBuffer, 0, matrix.buffer);
         }
         
@@ -198,6 +158,5 @@ export const twoDimensions: Sample = {
         const commandBuffer = encoder.finish();
 
         handle.device.queue.submit([commandBuffer]);
-        ++frameCount;
     }
 };

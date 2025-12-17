@@ -3,7 +3,9 @@
   "private": true,
   "version": "0.0.1",
   "source": "src/index.html",
+  "typings": "index.d.ts",
   "scripts": {
+    "ts": "tsc --noEmit",
     "dev": "yarn copy-assets && parcel",
     "build": "yarn copy-assets && parcel build",
     "copy-assets": "node scripts/copyAssets.js"
@@ -13,6 +15,7 @@
     "wgpu-matrix": "^3.4.0"
   },
   "devDependencies": {
+    "@parcel/transformer-inline-string": "2.16.3",
     "@webgpu/types": "^0.1.68",
     "parcel": "^2.14.0"
   }

@@ -13,6 +13,9 @@ export interface WebGPUHandle {
     vertexCount: number;
     uniformBuffer?: GPUBuffer;
     indexBuffer?: GPUBuffer;
+
+    // misc
+    frame: number;
 }
 
 export async function getHandle(canvasID = 'wgpu-canvas'): Promise<WebGPUHandle> {
@@ -56,5 +59,7 @@ export async function getHandle(canvasID = 'wgpu-canvas'): Promise<WebGPUHandle>
         pipelines: new Map(),
         bindGroups: [],
         vertexCount: 0,
+
+        frame: 0,
     }
 }

@@ -17,6 +17,7 @@ export const wgpu = {
 
         const rafDraw = () => {
             draw(handle, geometry);
+            ++handle.frame;
             raf = requestAnimationFrame(rafDraw);
         };
 
