@@ -1,3 +1,7 @@
+import { m } from "math";
+import { mat4, vec3 } from "wgpu-matrix";
+import { Camera } from "wgpu/camera";
+
 export interface WebGPUHandle {
     // bootstrap data
     adapter: GPUAdapter;
@@ -5,6 +9,8 @@ export interface WebGPUHandle {
     canvas: HTMLCanvasElement;
     context: GPUCanvasContext;
     format: GPUTextureFormat;
+
+    camera: Camera;
 
     // sample-specific data
     renderPassDescriptors: Map<string, GPURenderPassDescriptor>;
@@ -53,6 +59,8 @@ export async function getHandle(canvasID = 'wgpu-canvas'): Promise<WebGPUHandle>
         canvas,
         context,
         format,
+
+        camera: new Camera(vec3.create(0, 0, 1), m.radians(45), canvas.width / canvas.height, 0.1, 100),
 
         // sample-specific
         renderPassDescriptors: new Map(),

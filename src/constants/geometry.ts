@@ -11,33 +11,30 @@ export interface GeometryData {
     transform: Float32Array<ArrayBufferLike>;
 }
 
-const transform = mat4.identity();
-mat4.scale(transform, [0.5, 0.5, 0.5], transform);
-mat4.translate(transform, [0.5, -0.5, 0], transform);
-mat4.rotateZ(transform, m.radians(90), transform);
-
 export const geometry = {
-    triangle: (): GeometryData => ({
-        vertexCount: 3,
-        vertexDimension: 3,
-        vertices: new Float32Array([
-            -0.5,  -0.5,  0.0,  // left
-             0.5,  -0.5,  0.0,  // right
-             0.0,   0.5,  0.0,  // top
-        ]),
-        colors: new Uint8Array([
-               0,  255,    0,  255,    // green
-               0,    0,  255,  255,   // blue
-             255,    0,    0,  255,   // red
-        ]),
-        uvs: new Float32Array([
-             0.0,   0.0,    // left
-             1.0,   0.0,    // right
-             0.5,   1.0,    // top
-        ]),
-        transform,
-    }),
-    quad: (): GeometryData => {
+    triangle: (transform: Float32Array<ArrayBufferLike>): GeometryData => {
+        return {
+            vertexCount: 3,
+            vertexDimension: 3,
+            vertices: new Float32Array([
+                -0.5,  -0.5,  0.0,  // left
+                0.5,  -0.5,  0.0,  // right
+                0.0,   0.5,  0.0,  // top
+            ]),
+            colors: new Uint8Array([
+                0,  255,    0,  255,    // green
+                0,    0,  255,  255,   // blue
+                255,    0,    0,  255,   // red
+            ]),
+            uvs: new Float32Array([
+                0.0,   0.0,    // left
+                1.0,   0.0,    // right
+                0.5,   1.0,    // top
+            ]),
+            transform,
+        }
+    },
+    quad: (transform: Float32Array<ArrayBufferLike>): GeometryData => {
         const vertices = new Float32Array([
              0.5,  0.5, 0.0,  // top right
              0.5, -0.5, 0.0,  // bottom right
@@ -59,7 +56,7 @@ export const geometry = {
             1.0,    0.0,    // bottom right
             0.0,    0.0,    // bottom left
             0.0,    1.0,    // top left
-        ])
+        ]);
         
         return {
             vertexCount: indices.length,
@@ -68,7 +65,7 @@ export const geometry = {
             indices,
             colors,
             uvs,
-            transform,
+            transform
         };
     }
 }

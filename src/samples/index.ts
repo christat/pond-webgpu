@@ -1,7 +1,8 @@
 import { WebGPUHandle } from 'wgpu';
 
-import { twoDimensions } from 'samples/twoDimensions';
 import { GeometryData } from 'constants';
+import { twoDimensions } from 'samples/twoDimensions';
+import { threeDimensions } from 'samples/threeDimensions';
 
 export interface Sample {
     init: (handle: WebGPUHandle, geometry: GeometryData) => void;
@@ -10,4 +11,5 @@ export interface Sample {
 
 export const samples = {
     twoDimensions,
+    threeDimensions,
 }
