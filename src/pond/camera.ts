@@ -49,3 +49,5 @@ export class Camera {
         return mat4.mul(this.projection, mat4.mul(this.view, worldTransform));
     }
 }
+
+// new Camera(vec3.create(0, 0, 3), m.radians(45), canvas.width / canvas.height, 0.1, 100),

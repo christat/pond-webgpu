@@ -14,6 +14,6 @@ body {
 
 .wgpu-canvas {
   display: block;
-  width: 70%;
-  aspect-ratio: 1/1; /* NB! Squared for now as the viewport is just NDC, makes transforms dizzying to look at*/
+  width: 100%;
+  aspect-ratio: 16/9;
 }

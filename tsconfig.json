@@ -18,6 +18,7 @@
     "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
+    "experimentalDecorators": true,
 
     /* Type Checking */
     "strict": true,
@@ -31,14 +32,10 @@
     /* Path Alias Config */
     "baseUrl": ".",
     "paths": {
-      "wgpu": ["src/wgpu"],
-      "wgpu/*": ["src/wgpu/*"],
-      "math": ["src/math"],
-      "math/*": ["src/math/*"],
-      "samples": ["src/samples"],
-      "samples/*": ["src/samples/*"],
-      "constants": ["src/constants"],
-      "constants/*": ["src/constants/*"],
+      "app": ["src/app"],
+      "app/*": ["src/app/*"],
+      "pond": ["src/pond"],
+      "pond/*": ["src/pond/*"],
     }
   }
 }

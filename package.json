@@ -11,8 +11,10 @@
     "copy-assets": "node scripts/copyAssets.js"
   },
   "dependencies": {
+    "@lastolivegames/becsy": "^0.15.5",
     "webgpu-utils": "^2.0.2",
-    "wgpu-matrix": "^3.4.0"
+    "wgpu-matrix": "^3.4.0",
+    "wgsl_reflect": "^1.2.3"
   },
   "devDependencies": {
     "@parcel/transformer-inline-string": "2.16.3",

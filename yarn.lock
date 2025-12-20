@@ -2,6 +2,11 @@
 # yarn lockfile v1
 
 
+"@lastolivegames/becsy@^0.15.5":
+  version "0.15.5"
+  resolved "https://registry.yarnpkg.com/@lastolivegames/becsy/-/becsy-0.15.5.tgz#ccf3ae2cf5c16797711c41d9f407b09a2321f5f0"
+  integrity sha512-RZEL52er3eH+zpczz2xPyVIxVId+tx0pfTRxYjvE4Vi14plgHzqX7q+4TTJvJDmaxR9pdVjGwFnrY0Oe23fN7Q==
+
 "@lezer/common@^1.0.0":
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/@lezer/common/-/common-1.4.0.tgz#e02e4523a6ff97c4506ec9f27d8fb660e23c0968"
@@ -1337,3 +1342,8 @@ wgpu-matrix@^3.4.0:
   version "3.4.0"
   resolved "https://registry.yarnpkg.com/wgpu-matrix/-/wgpu-matrix-3.4.0.tgz#b1ed1456e0411d0803c6f094c5a3444b0ebd79d1"
   integrity sha512-kXHrbAPKEn9A32Wf4wVldyx9MmnzwhuB5p8GCqoJP3ItU5+iDT4J3aTQwPZWkfb153hwGtqZtUwR2M+ipJKadg==
+
+wgsl_reflect@^1.2.3:
+  version "1.2.3"
+  resolved "https://registry.yarnpkg.com/wgsl_reflect/-/wgsl_reflect-1.2.3.tgz#41985a661efdd00047e771ad7aa06ab131926a55"
+  integrity sha512-BQWBIsOn411M+ffBxmA6QRLvAOVbuz3Uk4NusxnqC1H7aeQcVLhdA3k2k/EFFFtqVjhz3z7JOOZF1a9hj2tv4Q==
