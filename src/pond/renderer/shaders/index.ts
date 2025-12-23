@@ -1,5 +1,4 @@
-import standard from 'pond/shaders/src/standard.wgsl';
-
+import standard from 'pond/renderer/shaders/src/standard.wgsl';
 
 export interface ShaderSource {
     label: string;

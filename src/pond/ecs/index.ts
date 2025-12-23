@@ -12,11 +12,17 @@ export const Mat4Type = Type.vector(
     Float32Array
 );
 
-export @component class WorldTransform {
-    @field(Mat4Type) declare transform: Mat4;
+export @component class WorldTransformComponent {
+    @field.float64.vector(16)
+    declare position: [
+        number, number, number, number,
+        number, number, number, number,
+        number, number, number, number,
+        number, number, number, number,
+    ] & {asTypedArray(): Float32Array};
 }
 
-export @component class Renderable {
+export @component class RenderObjectCompopnent {
     @field.uint32 declare meshID: number;
     @field.uint32 declare materialID: number;
 }

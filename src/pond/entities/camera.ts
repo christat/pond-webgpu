@@ -45,8 +45,8 @@ export class Camera {
         this.projection = mat4.perspective(this.vFovRadians, aspectRatio, this.zNear, this.zFar);
     }
 
-    project(worldTransform: Mat4): Mat4 {
-        return mat4.mul(this.projection, mat4.mul(this.view, worldTransform));
+    viewProjection(): Mat4 {
+        return mat4.mul(this.projection, this.view);
     }
 }
 

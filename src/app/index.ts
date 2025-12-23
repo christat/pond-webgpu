@@ -1,6 +1,4 @@
-import { World } from "@lastolivegames/becsy";
-import { Renderer } from "pond/renderer";
-import { Scene } from "pond/scene";
+import { Renderer, Scene, World } from "pond";
 
 export class App {
     ecs: World;
@@ -19,11 +17,12 @@ export class App {
         return new App(ecs, ren, scene);
     }
 
-    init() {
-        this.ren.init(this.scene);
+    async run() {
+        await this.ren.init(this.scene);
+        this.loop();
     }
 
-    loop = async () => {
+    private loop = async () => {
         await this.ecs.execute();
         this.ren.render(this.scene);
         requestAnimationFrame(this.loop);

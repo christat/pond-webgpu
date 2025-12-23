@@ -1,54 +1,44 @@
 import { App } from 'app';
 import { mesh } from 'app/mesh';
-import { Renderable, WorldTransform } from 'pond/ecs';
-import { hash } from 'pond/math/hash';
-import { Material, Scene } from 'pond/scene';
-import { mat4, vec3 } from 'wgpu-matrix';
+import { Material, Mesh, RenderObject, Scene, m } from 'pond';
 
 (async () => {
-    const cubeMesh = mesh.cube();
-    const wallMaterial: Material = { id: hash.stringHash32('wall'), diffuse: '' };
-    const boxMaterial: Material = { id: hash.stringHash32('box'), diffuse: '' };
-    const fMaterial: Material = { id: hash.stringHash32('f'), diffuse: '' };
-
-    const scene = new Scene(
-        [
-            [cubeMesh.id, cubeMesh]
-        ],
-        [
-            [wallMaterial.id, wallMaterial],
-            [boxMaterial.id, boxMaterial],
-            [fMaterial.id, fMaterial],
-        ]
-    );
-
-    const app = await App.create('wgpu-canvas', scene);
-
-    const instancePositions = [
-        vec3.create( 0.0, 0.0, 0.0),
-        vec3.create( 2.0, 5.0, -15.0),
-        vec3.create(-1.5, -2.2, -2.5),
-        vec3.create(-3.8, -2.0, -12.3),
-        vec3.create( 2.4, -0.4, -3.5),
-        vec3.create(-1.7, 3.0, -7.5),
-        vec3.create( 1.3, -2.0, -2.5),
-        vec3.create( 1.5, 2.0, -2.5),
-        vec3.create( 1.5, 0.2, -1.5),
-        vec3.create(-1.3, 1.0, -1.5)
+    // TODO content pipeline - gather meshes and materials present in a scene
+    const meshes: Mesh[] = [
+        mesh.triangle(),
+        mesh.quad(),
+        mesh.cube()
     ];
 
-    // instancePositions.forEach((position, i) => {
-    //     const materialID = i % 3 === 0 
-    //         ? wallMaterial.id
-    //         : i % 2 === 0 
-    //             ? boxMaterial.id
-    //             : fMaterial.id;
-    //     app.ecs.createEntity(
-    //         WorldTransform, { transform: mat4.translation(position) },
-    //         Renderable, { meshID: cubeMesh.id, materialID }
-    //     );
-    // });
+    const materials: Material[] = [
+        { id: m.stringHash32('metal_plate'), diffuse: 'assets/materials/metal_plate/diffuse.jpg' },
+        { id: m.stringHash32('red_brick'), diffuse: 'assets/materials/red_brick/diffuse.jpg' },
+        { id: m.stringHash32('wooden_garage_door'), diffuse: 'assets/materials/wooden_garage_door/diffuse.jpg' }
+    ];
 
-    app.init();
-    await app.loop();
+    const renderObjects: RenderObject[] = [...Array(1).keys()].map(() => {
+        // generate a random transform within the fixed camera frustum of the current demo
+        const transform = m.mat4.identity();
+        m.mat4.translate(transform, m.vec3.create(m.randFloat(-0.5, 0.5), m.randFloat(-0.5, 0.5), m.randFloat(-0.5, 0.05)));
+        const scale = m.randFloat(0.25, 1.5);
+        m.mat4.scale(transform, m.vec3.create(scale, scale, scale));
+        return {
+            transform,
+            // meshID: meshes[m.randInt(0, meshes.length)].id,
+            // materialID: materials[m.randInt(0, materials.length)].id,
+            meshID: meshes[0].id,
+            materialID: materials[0].id
+        }
+    });
+
+    const app = await App.create(
+        'wgpu-canvas',
+        new Scene(
+            meshes,
+            materials,
+            renderObjects
+        )
+    );
+
+    await app.run();
 })();
