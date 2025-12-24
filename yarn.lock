@@ -1342,8 +1342,3 @@ wgpu-matrix@^3.4.0:
   version "3.4.0"
   resolved "https://registry.yarnpkg.com/wgpu-matrix/-/wgpu-matrix-3.4.0.tgz#b1ed1456e0411d0803c6f094c5a3444b0ebd79d1"
   integrity sha512-kXHrbAPKEn9A32Wf4wVldyx9MmnzwhuB5p8GCqoJP3ItU5+iDT4J3aTQwPZWkfb153hwGtqZtUwR2M+ipJKadg==
-
-wgsl_reflect@^1.2.3:
-  version "1.2.3"
-  resolved "https://registry.yarnpkg.com/wgsl_reflect/-/wgsl_reflect-1.2.3.tgz#41985a661efdd00047e771ad7aa06ab131926a55"
-  integrity sha512-BQWBIsOn411M+ffBxmA6QRLvAOVbuz3Uk4NusxnqC1H7aeQcVLhdA3k2k/EFFFtqVjhz3z7JOOZF1a9hj2tv4Q==

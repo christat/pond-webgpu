@@ -1,27 +1,20 @@
-import { Mesh, Material, StringHash32, RenderObject, m } from "pond";
-import { Camera } from "./camera";
-import { Surface } from "pond/renderer/surface";
+import { Mesh, Material, Model, Camera, BoundingSphere } from "pond";
 
 export class Scene {
-    meshes: Mesh[];
-    materials: Material[];
-    renderObjects: RenderObject[];
+    meshes: Array<Mesh>;
+    materials: Array<Material>;
+    models: Array<Model>;
     camera: Camera;
 
     constructor(
         meshes: Array<Mesh>,
         materials: Array<Material>,
-        renderObjects: Array<RenderObject>,
+        models: Array<Model>,
+        camera: Camera
     ) {
         this.meshes = meshes;
         this.materials = materials;
-        this.renderObjects = renderObjects;
-        this.camera = new Camera(
-            m.vec3.create(0, 0, -3),
-            55,
-            1,
-            0.1,
-            100
-        );
+        this.models = models;
+        this.camera = camera;
     }
 }

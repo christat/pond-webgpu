@@ -1,4 +1,4 @@
-import { Renderer, Scene, World } from "pond";
+import { Camera, Model, Renderer, Scene, World } from "pond";
 
 export class App {
     ecs: World;
@@ -24,7 +24,7 @@ export class App {
 
     private loop = async () => {
         await this.ecs.execute();
-        this.ren.render(this.scene);
+        await this.ren.render(this.scene);
         requestAnimationFrame(this.loop);
     }
 }

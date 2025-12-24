@@ -12,7 +12,7 @@ body {
   width: 100%;
 }
 
-.wgpu-canvas {
+.webgpu-canvas {
   display: block;
   width: 100%;
   aspect-ratio: 16/9;

@@ -1,5 +1,11 @@
-import { ResourceID } from "pond/entities/shared";
+import { StringHash32 } from "pond/math";
+import { Resource } from "pond/entities";
 
-export interface Material extends ResourceID {
+export class Material extends Resource {
     diffuse: string;
+
+    constructor(id: StringHash32, diffuse: string) {
+        super(id);
+        this.diffuse = diffuse;
+    }
 }

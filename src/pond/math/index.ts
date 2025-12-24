@@ -4,6 +4,7 @@ import { trigonometry } from 'pond/math/trigonometry';
 import { hash } from 'pond/math/hash';
 import { rand } from 'pond/math/rand';
 
+export * from 'pond/math/boundingSphere';
 export type { StringHash32 } from 'pond/math/hash';
 export type { Mat3, Mat4, Vec2, Vec3, Vec4 } from 'wgpu-matrix';
 
