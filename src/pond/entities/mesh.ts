@@ -1,6 +1,6 @@
 import { Vec2, Vec3, Vec3n } from "wgpu-matrix";
-import { Resource } from "pond/entities";
-import { BoundingSphere, StringHash32 } from "pond/math";
+import { Resource } from "pond/entities/resource";
+import { StringHash32 } from "pond/math";
 
 export class Mesh extends Resource {
     vertices: Array<Vec3>;

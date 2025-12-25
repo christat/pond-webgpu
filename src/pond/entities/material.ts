@@ -1,5 +1,5 @@
 import { StringHash32 } from "pond/math";
-import { Resource } from "pond/entities";
+import { Resource } from "pond/entities/resource";
 
 export class Material extends Resource {
     diffuse: string;

@@ -1,4 +1,7 @@
-import { Mesh, Material, Model, Camera, BoundingSphere } from "pond";
+import { Camera } from "pond/entities/camera";
+import { Material } from "pond/entities/material";
+import { Mesh } from "pond/entities/mesh";
+import { Model } from "pond/entities/model";
 
 export class Scene {
     meshes: Array<Mesh>;

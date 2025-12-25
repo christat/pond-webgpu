@@ -16,7 +16,7 @@ struct VertexStorage {
 struct VSOutput {
     @builtin(position) position: vec4f,
     @location(0) uv: vec2f,
-    @location(1) textureIndex: u32,
+    @location(1) @interpolate(flat) textureIndex: u32
 }
 
 @vertex fn vs(

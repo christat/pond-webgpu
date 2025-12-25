@@ -117,7 +117,7 @@ export class Renderer {
         const { format } = renderTarget;
 
         // create shader module
-        const { label, code } = shaders.standard;
+        const { label, code } = shaders.draw;
         const module = this.device.createShaderModule({ label, code });
         this.renderModule = module;
         this.renderModuleDefs = wgu.makeShaderDataDefinitions(code);
@@ -339,8 +339,9 @@ export class Renderer {
         if(!this.globalUniformBuffer) {
             this.globalUniformView = wgu.makeStructuredView(this.cullModuleDefs.uniforms.globalUniform);
             this.globalUniformBuffer = this.device.createBuffer({
+                label: 'global uniform buffer',
                 size: this.globalUniformView.arrayBuffer.byteLength,
-                usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_SRC
+                usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
             });
         }
         
