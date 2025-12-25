@@ -1,9 +1,10 @@
+import * as wgu from 'webgpu-utils';
+import { Vec2, Vec3, Vec3n } from 'wgpu-matrix';
+
 import { Scene } from 'pond/entities';
 import { BoundingSphere, StringHash32 } from 'pond/math';
 import { getArrayStructuredView, shaders } from 'pond/renderer/shaders';
-import { Surface } from 'pond/renderer/surface';
-import * as wgu from 'webgpu-utils';
-import { Vec2, Vec3, Vec3n } from 'wgpu-matrix';
+import { ResizeLifecycle, Surface } from 'pond/renderer/surface';
 
 const multiDrawIndirectFeature = 'chromium-experimental-multi-draw-indirect';
 const indirectFirstInstanceFeature = 'indirect-first-instance';
@@ -26,6 +27,7 @@ export class Renderer {
     globalUniformView!: wgu.StructuredView;
     private depthTexture!: GPUTexture;
     private depthTextureView!: GPUTextureView;
+    private depthTextureCallbackSet: boolean = false;
 
     // cull pass handles
     private cullModule!: GPUShaderModule;
@@ -86,48 +88,47 @@ export class Renderer {
         const requiredFeatures: Array<GPUFeatureName> = [];
         if (adapter.features.has(multiDrawIndirectFeature)) requiredFeatures.push(multiDrawIndirectFeature as any);
         if (adapter.features.has(indirectFirstInstanceFeature)) requiredFeatures.push(indirectFirstInstanceFeature);
+        console.log('required features: ', requiredFeatures);
         return requiredFeatures;
     }
 
-    async init(scene: Scene) {
+    async init(scene: Scene, resizeLifecycle: ResizeLifecycle) {
+        this.surface.init(this.device, resizeLifecycle);
         const renderTarget = this.surface.context.getCurrentTexture();
         this.initCullPipeline();
-        this.initRenderPipeline(renderTarget);
-        this.initDescriptors(renderTarget);
+        this.initRenderPipeline(renderTarget.format);
+        this.initDepthTextureAndView(renderTarget.width, renderTarget.height);
+        this.initDescriptors(renderTarget.createView());
         await this.initPipelineBindings(scene);
         this.initPipelineBindGroups();
     }
 
     private initCullPipeline() {
         const { code } = shaders.cull;
-        const module = this.device.createShaderModule({
+        this.cullModule = this.device.createShaderModule({
             label: 'cull compute module',
             code
         });
-        this.cullModule = module;
         this.cullModuleDefs = wgu.makeShaderDataDefinitions(code);
         this.cullPipeline = this.device.createComputePipeline({
             label: 'cull compute pipeline',
             layout: 'auto',
-            compute: { module }
+            compute: { module: this.cullModule }
         });
     }
 
-    private initRenderPipeline(renderTarget: GPUTexture) {
-        const { format } = renderTarget;
-
+    private initRenderPipeline(format: GPUTextureFormat) {
         // create shader module
         const { label, code } = shaders.draw;
-        const module = this.device.createShaderModule({ label, code });
-        this.renderModule = module;
+        this.renderModule = this.device.createShaderModule({ label, code });
         this.renderModuleDefs = wgu.makeShaderDataDefinitions(code);
 
         // create pipeline
         this.renderPipeline = this.device.createRenderPipeline({
             label: 'render pipeline',
             layout: 'auto',
-            vertex: { module },
-            fragment: { module, targets: [{ format }] },
+            vertex: { module: this.renderModule },
+            fragment: { module: this.renderModule, targets: [{ format }] },
             depthStencil: {
                 depthWriteEnabled: true,
                 depthCompare: 'less',
@@ -136,40 +137,31 @@ export class Renderer {
         });
     }
 
-    private initDescriptors(renderTarget: GPUTexture) {
-        this.cullPassDescriptor = {
-            label: 'cull descriptor'
-        };
-
-        const { width, height } = renderTarget;     
+    private initDepthTextureAndView = (width: number, height: number) => {
+        if (this.depthTexture) this.depthTexture.destroy();
         this.depthTexture = this.device.createTexture({
             label: 'depth texture',
-            size: {
-                width,
-                height
-            },
+            size: { width, height },
             format: 'depth24plus',
             usage: GPUTextureUsage.RENDER_ATTACHMENT,
         });
         this.depthTextureView = this.depthTexture.createView();
+        if (!this.depthTextureCallbackSet) {
+            this.surface.addCallback(this.initDepthTextureAndView);
+            this.depthTextureCallbackSet = true;
+        }
+    }
 
-        // handle depth texture thrashing on viewport resize
-        this.surface.addCallback((width, height) => {
-            const depthTexture = this.device.createTexture({
-                size: [width, height],
-                format: 'depth24plus',
-                usage: GPUTextureUsage.RENDER_ATTACHMENT,
-            });
-            this.depthTexture.destroy();
-            this.depthTexture = depthTexture;
-            this.depthTextureView = depthTexture.createView();
-        });
+    private initDescriptors(view: GPUTextureView) {
+        this.cullPassDescriptor = {
+            label: 'cull pass descriptor'
+        };
 
         this.renderPassDescriptor = {
             label: 'render pass descriptor',
             colorAttachments: [
                 {
-                    view: renderTarget.createView(),
+                    view,
                     clearValue: [0.3, 0.3, 0.3, 1],
                     loadOp: 'clear',
                     storeOp: 'store',
@@ -220,15 +212,20 @@ export class Renderer {
             for(let i = 0; i < scene.meshes.length; ++i) {
                 const mesh = scene.meshes[i];
 
-                position.push(...mesh.vertices.reduce((acc: number[], vertex: Vec3) => {
-                    acc.push(...Array.from(vertex));
-                    return acc;
-                }, []));
+                for(let j = 0; j < mesh.vertices.length; ++j) {
+                    const { } = vertexStorageView.views;
+                    position.push(...mesh.vertices.reduce((acc: number[], vertex: Vec3) => {
+                        acc.push(...Array.from(vertex));
+                        return acc;
+                    }, []));
 
-                uv.push(...mesh.uvs.reduce((acc: number[], uv: Vec2) => {
-                    acc.push(...Array.from(uv));
-                    return acc;
-                }, []));
+                    uv.push(...mesh.uvs.reduce((acc: number[], uv: Vec2) => {
+                        acc.push(...Array.from(uv));
+                        return acc;
+                    }, []));
+                }
+
+                
 
                 index.push(...mesh.indices.reduce((acc: number[], index: Vec3n) => {
                     acc.push(...index);
@@ -239,11 +236,11 @@ export class Renderer {
                 meshMetadata.baseVertex = position.length;
                 meshMetadata.firstIndex = index.length;
             }
-            vertexStorageView.set({ position, uv });
+            //vertexStorageView.set({ position, uv });
             this.vertexBuffer = this.device.createBuffer({
                 label: 'vertex buffer',
                 size: vertexStorageView.arrayBuffer.byteLength,
-                usage: GPUBufferUsage.STORAGE
+                usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
             });
             this.device.queue.writeBuffer(this.vertexBuffer, 0, vertexStorageView.arrayBuffer);
 
@@ -251,7 +248,7 @@ export class Renderer {
             this.indexBuffer = this.device.createBuffer({
                 label: 'index buffer',
                 size: indexBufferView.byteLength,
-                usage: GPUBufferUsage.INDEX
+                usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
             });
             this.device.queue.writeBuffer(this.indexBuffer, 0, indexBufferView.buffer);
         }
@@ -292,19 +289,19 @@ export class Renderer {
                 baseVertex.push(meshMetadata.baseVertex);
                 firstInstance.push(0);
             }
-            modelBoundingSphereStorageView.set({ center, radius });
+            //modelBoundingSphereStorageView.set({ center, radius });
             this.modelBoundingSpheresBuffer = this.device.createBuffer({
                 label: 'model bounding spheres buffer',
                 size: modelBoundingSphereStorageView.arrayBuffer.byteLength,
-                usage: GPUBufferUsage.STORAGE
+                usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
             });
             this.device.queue.writeBuffer(this.modelBoundingSpheresBuffer, 0, modelBoundingSphereStorageView.arrayBuffer);
             
-            drawIndexedIndirectCommandStorageView.set({ indexCount, instanceCount, firstIndex, baseVertex, firstInstance });
+            //drawIndexedIndirectCommandStorageView.set({ indexCount, instanceCount, firstIndex, baseVertex, firstInstance });
             this.drawIndexedIndirectCommandsBuffer = this.device.createBuffer({
                 label: 'draw indexed indirect command buffer',
                 size: drawIndexedIndirectCommandStorageView.arrayBuffer.byteLength,
-                usage: GPUBufferUsage.STORAGE | GPUBufferUsage.INDIRECT
+                usage: GPUBufferUsage.STORAGE | GPUBufferUsage.INDIRECT | GPUBufferUsage.COPY_DST
             });
             this.device.queue.writeBuffer(this.drawIndexedIndirectCommandsBuffer, 0, drawIndexedIndirectCommandStorageView.arrayBuffer);
         }
@@ -320,7 +317,7 @@ export class Renderer {
             entries: [
                 { binding: 0, resource: this.globalUniformBuffer },
                 { binding: 1, resource: this.modelBoundingSpheresBuffer },
-                { binding: 0, resource: this.drawIndexedIndirectCommandsBuffer },
+                { binding: 2, resource: this.drawIndexedIndirectCommandsBuffer },
             ]
         });
 
@@ -355,11 +352,11 @@ export class Renderer {
     async render(scene: Scene) {
         this.setGlobalUniform(scene);
 
-        const encoder = this.device.createCommandEncoder();
-
         // cull pass
+        let encoder = this.device.createCommandEncoder();
         {
             const cullPass = encoder.beginComputePass(this.cullPassDescriptor);
+            cullPass.setPipeline(this.cullPipeline);
             cullPass.setBindGroup(0, this.cullBindGroup);
             cullPass.dispatchWorkgroups(scene.models.length);
             cullPass.end();
@@ -367,16 +364,17 @@ export class Renderer {
         this.device.queue.submit([encoder.finish()]);
 
         // render pass
+        encoder = this.device.createCommandEncoder();
         {
             const renderPass = encoder.beginRenderPass(this.renderPassDescriptor);
             renderPass.setPipeline(this.renderPipeline);
             renderPass.setBindGroup(0, this.renderBindGroup);
             renderPass.setIndexBuffer(this.indexBuffer, 'uint32');
-            if(this.multiDrawIndirectEnabled) {
+            if (this.multiDrawIndirectEnabled) {
                 (renderPass as GPURenderPassEncoderMultiDrawIndirect)
                     .multiDrawIndirect(this.drawIndexedIndirectCommandsBuffer, 0, scene.models.length);
             } else {
-                for(let i = 0; i < scene.models.length; ++i) {
+                for (let i = 0; i < scene.models.length; ++i) {
                     renderPass.drawIndexedIndirect(this.drawIndexedIndirectCommandsBuffer, i * this.drawIndexedIndirectCommandSize);
                 }
             }

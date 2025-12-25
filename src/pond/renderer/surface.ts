@@ -1,5 +1,10 @@
 export type SurfaceResizeCallback = (width: number, height: number) => void;
 
+export interface ResizeLifecycle {
+    onResizeStart(): void;
+    onResizeEnd(): void;
+}
+
 export class Surface {
     context: GPUCanvasContext;
     format: GPUTextureFormat;
@@ -26,8 +31,11 @@ export class Surface {
         this.format = format;
         this.canvas = canvas;
         this.resizeCallbacks = [];
+    }
 
+    init(device: GPUDevice, resizeLifecycle: ResizeLifecycle) {
         new ResizeObserver(([canvasEntry, ..._]) => {
+            resizeLifecycle.onResizeStart();
             const { target, contentBoxSize } = canvasEntry;
             const { inlineSize: width, blockSize: height } = contentBoxSize[0];
             (target as HTMLCanvasElement).width = Math.max(1, Math.min(width, device.limits.maxTextureDimension2D));
@@ -35,8 +43,8 @@ export class Surface {
 
             this.resizeCallbacks.forEach(callback => callback(this.canvas.width, this.canvas.height));
             //handle.camera.updateAspectRatio(canvas.width / canvas.height);
-            
-            
+
+            resizeLifecycle.onResizeEnd();
         }).observe(this.canvas);
     }
 
