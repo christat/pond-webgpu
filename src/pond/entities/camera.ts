@@ -1,3 +1,4 @@
+import { Surface } from "pond/renderer/surface";
 import { mat4, Mat4, vec3, Vec3 } from "wgpu-matrix";
 
 
@@ -33,6 +34,10 @@ export class Camera {
         this.zFar = zFar;
     }
 
+    init = (surface: Surface) => {
+        surface.addCallback(this.resizeCallback)
+    }
+
     updateTransform(transform: Vec3) {
         this.view = mat4.lookAt(
             transform,
@@ -48,6 +53,8 @@ export class Camera {
     viewProjection(): Mat4 {
         return mat4.mul(this.projection, this.view);
     }
-}
 
-// new Camera(vec3.create(0, 0, 3), m.radians(45), canvas.width / canvas.height, 0.1, 100),
+    resizeCallback = (width: number, height: number) => {
+        this.updateAspectRatio(width / height);
+    }
+}

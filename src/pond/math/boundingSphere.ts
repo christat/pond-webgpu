@@ -23,6 +23,7 @@ export class BoundingSphere {
 
         this.center = vec3.divScalar(this.center, points.length);
         this.radius = vec2.distSq(points[0], this.center);
+
         for (let i = 1; i < points.length; ++i) {
             this.radius = Math.max(this.radius, vec2.distSq(points[i], this.center));
         }

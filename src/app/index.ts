@@ -15,8 +15,12 @@ export class App {
         this.scene = scene;
         this.raf = 0;
         this.resizeLifecycle = {
-            onResizeStart: () => cancelAnimationFrame(this.raf),
-            onResizeEnd: () => this.raf = requestAnimationFrame(this.loop),
+            onResizeStart: () => {
+                cancelAnimationFrame(this.raf)
+            },
+            onResizeEnd: () => {
+                this.raf = requestAnimationFrame(this.loop)
+            },
         }
     }
 

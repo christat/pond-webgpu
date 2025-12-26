@@ -17,7 +17,7 @@ struct DrawIndexedIndirectCommand {
 };
 
 @group(0) @binding(0) var<uniform> globalUniform: GlobalUniform;
-@group(0) @binding(1) var<storage, read> modelBindingSphereStorage: array<ModelBoundingSphere>;
+@group(0) @binding(1) var<storage, read> modelBoundingSphereStorage: array<ModelBoundingSphere>;
 @group(0) @binding(2) var<storage, read_write> drawIndexedIndirectCommandStorage: array<DrawIndexedIndirectCommand>;
 
 // Extract individual frustum planes from viewProjection matrix; intersect with model sphere
@@ -54,7 +54,7 @@ fn isModelVisible(viewProjection: mat4x4f, position: vec3f, radius: f32) -> bool
     if (i > globalUniform.modelCount) {
         return;
     }
-    let modelBoundingSphere = modelBindingSphereStorage[i];
+    let modelBoundingSphere = modelBoundingSphereStorage[i];
     let modelVisible = isModelVisible(globalUniform.viewProjection, modelBoundingSphere.center, modelBoundingSphere.radius);
     drawIndexedIndirectCommandStorage[i].instanceCount = u32(select(0, 1, modelVisible));
 }
