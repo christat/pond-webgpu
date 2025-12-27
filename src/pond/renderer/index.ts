@@ -6,10 +6,11 @@ import { shaders } from 'pond/renderer/shaders';
 import { ResizeLifecycle, Surface } from 'pond/renderer/surface';
 import { utils } from 'pond/renderer/utils';
 
-const multiDrawIndirectFeature = 'chromium-experimental-multi-draw-indirect';
 const indirectFirstInstanceFeature = 'indirect-first-instance';
-interface GPURenderPassEncoderMultiDrawIndirect extends GPURenderPassEncoder {
+const multiDrawIndirectFeature = 'chromium-experimental-multi-draw-indirect';
+interface GPURenderPassMultiDrawEncoder extends GPURenderPassEncoder {
     multiDrawIndirect(drawBuffer: GPUBuffer, offset: number, maxDrawCount: number): undefined;
+    multiDrawIndexedIndirect(drawBuffer: GPUBuffer, offset: number, maxDrawCount: number): undefined;
 }
 
 export class Renderer {
@@ -20,7 +21,6 @@ export class Renderer {
 
     // features
     private multiDrawIndirectEnabled: boolean;
-    private indirectFirstInstanceEnabled: boolean;
 
     // shared resources
     globalUniformBuffer!: GPUBuffer;
@@ -49,6 +49,7 @@ export class Renderer {
     private renderBindGroup!: GPUBindGroup;
     
     // render pass bindings
+    private modelStorageBuffer!: GPUBuffer;
     private vertexBuffer!: GPUBuffer;
     private indexBuffer!: GPUBuffer;
     private diffuseArray!: GPUTexture;
@@ -62,8 +63,7 @@ export class Renderer {
         this.adapter = adapter;
         this.device = device;
         this.surface = surface;
-        this.multiDrawIndirectEnabled = false; adapter.features.has(multiDrawIndirectFeature);
-        this.indirectFirstInstanceEnabled = adapter.features.has(indirectFirstInstanceFeature);
+        this.multiDrawIndirectEnabled = adapter.features.has(multiDrawIndirectFeature);
     }
 
     static async create(canvasID: string): Promise<Renderer> {
@@ -85,9 +85,15 @@ export class Renderer {
     }
 
     private static getRequiredFeatures(adapter: GPUAdapter): Array<GPUFeatureName> {
-        const requiredFeatures: Array<GPUFeatureName> = [];
+        const requiredFeatures: Array<GPUFeatureName> = [
+            indirectFirstInstanceFeature
+        ];
+
+        // mandatory features
+        if (!adapter.features.has(indirectFirstInstanceFeature)) throw Error(`Adapter feature '${indirectFirstInstanceFeature}' not supported!`);
+
+        // optional features
         if (adapter.features.has(multiDrawIndirectFeature)) requiredFeatures.push(multiDrawIndirectFeature as any);
-        if (adapter.features.has(indirectFirstInstanceFeature)) requiredFeatures.push(indirectFirstInstanceFeature);
         return requiredFeatures;
     }
 
@@ -213,7 +219,8 @@ export class Renderer {
                 const mesh = scene.meshes[i];
 
                 for(let j = 0; j < mesh.vertices.length; ++j) {
-                    const { position, uv } = vertexBufferView.views[j] as Record<string, wgu.StructuredView>;
+                    // NB! Index into view by last vertex to avoid stomping previous mesh write
+                    const { position, uv } = vertexBufferView.views[baseVertex + j] as Record<string, Float32Array>;
                     position.set(mesh.vertices[j]);
                     uv.set(mesh.uvs[j]);
                 }
@@ -222,7 +229,7 @@ export class Renderer {
                 meshMetadata.baseVertex = baseVertex;
                 meshMetadata.firstIndex = firstIndex;
                 baseVertex += mesh.vertices.length;
-                firstIndex += mesh.indices.length;
+                firstIndex += 3 * mesh.indices.length;
             }
 
             this.vertexBuffer = utils.createAndFillBuffer(this.device, 'vertex buffer', GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, vertexBufferView.arrayBuffer);
@@ -236,7 +243,7 @@ export class Renderer {
             this.indexBuffer = utils.createAndFillBuffer(this.device, 'index buffer', GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST, indexBufferData.buffer);
         }
         
-        // per-model buffers: modelBoundingSpheresBuffer, drawIndexedIndirectCommands
+        // per-model buffers: modelBoundingSpheresBuffer, drawIndexedIndirectCommands, modelStorageBuffer
         {
             const materialIndexByID: Map<StringHash32, number> = new Map();
             for(let i = 0; i < scene.materials.length; ++i) {
@@ -245,9 +252,11 @@ export class Renderer {
             }
 
             const { modelBoundingSphereStorage, drawIndexedIndirectCommandStorage } = this.cullModuleDefs.storages;
+            const { modelStorage } = this.renderModuleDefs.storages;
             const { view: modelBoundingSphereStorageView } = utils.getArrayStructuredView(modelBoundingSphereStorage, scene.models.length);
             const { view: drawIndexedIndirectCommandStorageView, size: drawIndexedIndirectCommandSize } = utils.getArrayStructuredView(drawIndexedIndirectCommandStorage, scene.models.length);
             this.drawIndexedIndirectCommandSize = drawIndexedIndirectCommandSize;
+            const { view: modelStorageView } = utils.getArrayStructuredView(modelStorage, scene.models.length);
             
             for(let i = 0; i < scene.models.length; ++i) {
                 const model = scene.models[i];
@@ -262,11 +271,16 @@ export class Renderer {
                 instanceCount.set([0]);
                 firstIndex.set([meshMetadata.firstIndex]);
                 baseVertex.set([meshMetadata.baseVertex]);
-                firstInstance.set([0]);
+                firstInstance.set([i]); // NB! Hack: use instanceIndex as "drawIndex"; we sacrifice instancing in exchange for per-model buffer indexing.
+
+                const { transform, diffuseIndex } = modelStorageView.views[i] as Record<string, wgu.StructuredView>;
+                transform.set(model.transform);
+                diffuseIndex.set([materialIndexByID.get(model.materialID)!]);
             }
 
             this.modelBoundingSpheresBuffer = utils.createAndFillBuffer(this.device, 'model bounding spheres buffer', GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, modelBoundingSphereStorageView.arrayBuffer);
             this.drawIndexedIndirectCommandsBuffer = utils.createAndFillBuffer(this.device, 'draw indexed indirect command buffer', GPUBufferUsage.STORAGE | GPUBufferUsage.INDIRECT | GPUBufferUsage.COPY_DST, drawIndexedIndirectCommandStorageView.arrayBuffer);
+            this.modelStorageBuffer = utils.createAndFillBuffer(this.device, 'model storage buffer', GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, modelStorageView.arrayBuffer);
         }
         
         // per-material buffers and samplers
@@ -290,9 +304,10 @@ export class Renderer {
             layout: this.renderPipeline.getBindGroupLayout(0),
             entries: [
                 { binding: 0, resource: { buffer: this.globalUniformBuffer } },
-                { binding: 1, resource: { buffer: this.vertexBuffer } },
-                { binding: 2, resource: this.diffuseArray.createView() },
-                { binding: 3, resource: this.textureSampler },
+                { binding: 1, resource: { buffer: this.modelStorageBuffer } },
+                { binding: 2, resource: { buffer: this.vertexBuffer } },
+                { binding: 3, resource: this.diffuseArray.createView() },
+                { binding: 4, resource: this.textureSampler },
             ],
         });
     }
@@ -337,8 +352,8 @@ export class Renderer {
             renderPass.setIndexBuffer(this.indexBuffer, 'uint32');
             
             if (this.multiDrawIndirectEnabled) {
-                (renderPass as GPURenderPassEncoderMultiDrawIndirect)
-                    .multiDrawIndirect(this.drawIndexedIndirectCommandsBuffer, 0, scene.models.length);
+                (renderPass as GPURenderPassMultiDrawEncoder)
+                    .multiDrawIndexedIndirect(this.drawIndexedIndirectCommandsBuffer, 0, scene.models.length);
             } else {
                 for (let i = 0; i < scene.models.length; ++i) {
                     renderPass.drawIndexedIndirect(this.drawIndexedIndirectCommandsBuffer, i * this.drawIndexedIndirectCommandSize);
@@ -349,5 +364,9 @@ export class Renderer {
         }
 
         ++this.frame;
+    }
+
+    getFrame() {
+        return this.frame;
     }
 }

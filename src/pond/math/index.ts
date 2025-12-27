@@ -1,4 +1,4 @@
-import { mat3, mat4, vec2, vec3, vec4 } from 'wgpu-matrix';
+import { mat3, mat4, vec2, vec2n, vec3, vec3n, vec4 } from 'wgpu-matrix';
 
 import { trigonometry } from 'pond/math/trigonometry';
 import { hash } from 'pond/math/hash';
@@ -15,6 +15,8 @@ export const m = {
     mat3,
     mat4,
     vec2,
+    vec2n,
     vec3,
+    vec3n,
     vec4
 }
