@@ -8,15 +8,18 @@
     "ts": "tsc --noEmit",
     "dev": "yarn copy-assets && parcel",
     "build": "yarn copy-assets && parcel build",
-    "copy-assets": "node scripts/copyAssets.js"
+    "copy-assets": "node scripts/copyAssets.js",
+    "circular-deps": "dpdm --no-warning --no-tree ./src/index.ts"
   },
   "dependencies": {
+    "@lastolivegames/becsy": "^0.15.5",
     "webgpu-utils": "^2.0.2",
     "wgpu-matrix": "^3.4.0"
   },
   "devDependencies": {
     "@parcel/transformer-inline-string": "2.16.3",
     "@webgpu/types": "^0.1.68",
+    "dpdm": "^3.14.0",
     "parcel": "^2.14.0"
   }
 }

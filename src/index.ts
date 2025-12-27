@@ -1,16 +1,54 @@
-import './index.css';
-
-import { wgpu } from 'wgpu';
-import { samples } from 'samples';
-import { geometry } from 'constants';
-import { mat4 } from 'wgpu-matrix';
-import { m } from 'math';
+import { App } from 'app';
+import { material } from 'app/material';
+import { mesh } from 'app/mesh';
+import { Material, Mesh, Model, Scene, m } from 'pond';
+import { Camera } from 'pond/entities/camera';
 
 (async () => {
-    const handle = await wgpu.getHandle();
-    const sample = samples.threeDimensions;
+    // TODO content pipeline - gather meshes and materials present in a scene
+    const meshes: Mesh[] = [
+        mesh.triangle(),
+        mesh.quad(),
+        mesh.cube(),
+    ];
 
-    const transform = mat4.rotationX(m.radians(-55));
-    const geo = geometry.quad(transform);
-    wgpu.renderLoop(handle, geo, sample.init, sample.draw);
+    const materials: Material[] = [
+        material.red_brick(),
+        material.metal_plate(),
+        material.wooden_garage_door(),
+    ];
+
+    const models: Model[] = [...Array(6).keys()].map((_, i) => {
+        // generate a random transform within the fixed camera frustum of the current demo
+        let transform = m.mat4.identity();
+        transform = m.mat4.translate(transform, m.vec3.create(m.randFloat(-1, 1), m.randFloat(-1, 1), m.randFloat(-1, 1)));
+        const scale = m.randFloat(0.25, 0.75);
+        transform = m.mat4.scale(transform, m.vec3.create(scale, scale, scale));
+
+        return new Model(
+            transform,
+            meshes[m.randInt(0, meshes.length)].id,
+            materials[m.randInt(0, materials.length)].id
+        );
+    });
+
+    const camera = new Camera(
+        m.vec3.create(0, 0, 3),
+        45,
+        16 / 9,
+        0.1,
+        100
+    );
+
+    const app = await App.create(
+        'webgpu-canvas',
+        new Scene(
+            meshes,
+            materials,
+            models,
+            camera
+        )
+    );
+
+    await app.run();
 })();

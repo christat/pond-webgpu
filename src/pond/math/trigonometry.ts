@@ -6,7 +6,7 @@ function degrees(radians: number) {
     return radians * (180 / Math.PI);
 }
 
-export const trigonometryExports = {
+export const trigonometry = {
     radians,
     degrees,
 };
