@@ -40,7 +40,7 @@ export class App {
 
         // TODO move into ECS
         const currentFrame = this.ren.getFrame();
-        const radius = 2;
+        const radius = 3;
         const speed = 0.033;
         const x = Math.sin(currentFrame * speed) * radius;
         const z = Math.cos(currentFrame * speed) * radius

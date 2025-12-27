@@ -27,7 +27,7 @@ export class Camera {
             this.target,
             this.up
         );
-        this.projection = mat4.perspective(vFovRadians, aspectRatio, zNear, zFar);
+        this.projection = mat4.perspectiveReverseZ(vFovRadians, aspectRatio, zNear, zFar);
         
         this.vFovRadians = vFovRadians;
         this.zNear = zNear;
@@ -47,7 +47,7 @@ export class Camera {
     }
 
     updateAspectRatio(aspectRatio: number) {
-        this.projection = mat4.perspective(this.vFovRadians, aspectRatio, this.zNear, this.zFar);
+        this.projection = mat4.perspectiveReverseZ(this.vFovRadians, aspectRatio, this.zNear, this.zFar);
     }
 
     viewProjection(): Mat4 {
