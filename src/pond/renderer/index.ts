@@ -138,8 +138,8 @@ export class Renderer {
             fragment: { module: this.renderModule, targets: [{ format }] },
             depthStencil: {
                 depthWriteEnabled: true,
-                depthCompare: 'less',
-                format: 'depth24plus',
+                depthCompare: 'greater',
+                format: 'depth32float',
             }
         });
     }
@@ -149,7 +149,7 @@ export class Renderer {
         this.depthTexture = this.device.createTexture({
             label: 'depth texture',
             size: { width, height },
-            format: 'depth24plus',
+            format: 'depth32float',
             usage: GPUTextureUsage.RENDER_ATTACHMENT,
         });
         this.depthTextureView = this.depthTexture.createView();
@@ -176,7 +176,7 @@ export class Renderer {
             ],
             depthStencilAttachment: {
                 view: this.depthTextureView,
-                depthClearValue: 1.0,
+                depthClearValue: 0,
                 depthLoadOp: 'clear',
                 depthStoreOp: 'store',
             }
