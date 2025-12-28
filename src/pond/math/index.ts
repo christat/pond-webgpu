@@ -6,7 +6,7 @@ import { rand } from 'pond/math/rand';
 
 export * from 'pond/math/boundingSphere';
 export type { StringHash32 } from 'pond/math/hash';
-export type { Mat3, Mat4, Vec2, Vec3, Vec4 } from 'wgpu-matrix';
+export type { Mat3, Mat4, Vec2, Vec3, Vec4, Quat } from 'wgpu-matrix';
 
 export const m = {
     ...trigonometry,
@@ -18,5 +18,5 @@ export const m = {
     vec2n,
     vec3,
     vec3n,
-    vec4
+    vec4,
 }

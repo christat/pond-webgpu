@@ -2,7 +2,6 @@ import { App } from 'app';
 import { material } from 'app/material';
 import { mesh } from 'app/mesh';
 import { Material, Mesh, Model, Scene, m } from 'pond';
-import { Camera } from 'pond/entities/camera';
 
 (async () => {
     // TODO content pipeline - gather meshes and materials present in a scene
@@ -32,23 +31,7 @@ import { Camera } from 'pond/entities/camera';
         );
     });
 
-    const camera = new Camera(
-        m.vec3.create(0, 0, 3),
-        45,
-        16 / 9,
-        0.1,
-        100
-    );
-
-    const app = await App.create(
-        'webgpu-canvas',
-        new Scene(
-            meshes,
-            materials,
-            models,
-            camera
-        )
-    );
+    const app = await App.create('webgpu-canvas', new Scene(meshes, materials, models));
 
     await app.run();
 })();

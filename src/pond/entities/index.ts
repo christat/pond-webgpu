@@ -1,4 +1,3 @@
-export * from 'pond/entities/camera';
 export * from 'pond/entities/material';
 export * from 'pond/entities/mesh';
 export * from 'pond/entities/model';

@@ -1,7 +1,7 @@
 import * as wgu from 'webgpu-utils';
 
 import { Mesh, Scene } from 'pond/entities';
-import { BoundingSphere, StringHash32 } from 'pond/math';
+import { BoundingSphere, Mat4, StringHash32 } from 'pond/math';
 import { shaders } from 'pond/renderer/shaders';
 import { ResizeLifecycle, Surface } from 'pond/renderer/surface';
 import { utils } from 'pond/renderer/utils';
@@ -97,16 +97,14 @@ export class Renderer {
         return requiredFeatures;
     }
 
-    async init(scene: Scene, resizeLifecycle: ResizeLifecycle) {
+    async init(scene: Scene, resizeLifecycle: ResizeLifecycle, viewProjection: Mat4) {
         const renderTarget = this.surface.context.getCurrentTexture();
         this.initCullPipeline();
         this.initRenderPipeline(renderTarget.format);
         this.initDepthTextureAndView(renderTarget.width, renderTarget.height);
         this.initDescriptors(renderTarget.createView());
-        await this.initPipelineBindings(scene);
+        await this.initPipelineBindings(scene, viewProjection);
         this.initPipelineBindGroups();
-
-        scene.camera.init(this.surface);
         this.surface.init(this.device, resizeLifecycle);
     }
 
@@ -183,8 +181,8 @@ export class Renderer {
         };
     }
 
-    private async initPipelineBindings(scene: Scene) {        
-        this.setGlobalUniform(scene);
+    private async initPipelineBindings(scene: Scene, viewProjection: Mat4) {        
+        this.setGlobalUniform(scene.models.length, viewProjection);
 
         const { vertexStorage } = this.renderModuleDefs.storages;
 
@@ -312,7 +310,7 @@ export class Renderer {
         });
     }
 
-    private setGlobalUniform(scene: Scene) {
+    private setGlobalUniform(modelCount: number, viewProjection: Mat4) {
         if(!this.globalUniformBuffer) {
             this.globalUniformView = wgu.makeStructuredView(this.cullModuleDefs.uniforms.globalUniform);
             this.globalUniformBuffer = this.device.createBuffer({
@@ -321,16 +319,13 @@ export class Renderer {
                 usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
             });
         }
-        this.globalUniformView.set({
-           viewProjection: scene.camera.viewProjection(),
-           modelCount: scene.models.length 
-        });
+        this.globalUniformView.set({ viewProjection, modelCount });
         this.device.queue.writeBuffer(this.globalUniformBuffer, 0, this.globalUniformView.arrayBuffer);
     }
 
-    async render(scene: Scene) {
+    async render(scene: Scene, viewProjection: Mat4) {
         this.initDescriptors(this.surface.context.getCurrentTexture().createView());
-        this.setGlobalUniform(scene);
+        this.setGlobalUniform(scene.models.length, viewProjection);
 
         // cull pass
         {
